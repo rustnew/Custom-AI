@@ -1,0 +1,10 @@
+{
+  "entry_point": "cli chat --file (no max_tokens parameter, automatic output budget)",
+  "configured_context": 28672,
+  "input_tokens": 28535,
+  "duration_seconds": 130.0495971829805,
+  "peak_memory_mib": 15193.0,
+  "output": "PARIS7  \nLYON8  \nLILLE9\n",
+  "codes_recalled": true,
+  "exit_code": 0
+}

@@ -1,0 +1,72 @@
+[
+  {
+    "case": "invalid-json",
+    "status": 400,
+    "healthy_after": true
+  },
+  {
+    "case": "unknown-model",
+    "status": 400,
+    "healthy_after": true
+  },
+  {
+    "case": "bad-temperature",
+    "status": 400,
+    "healthy_after": true
+  },
+  {
+    "case": "bad-role",
+    "status": 400,
+    "healthy_after": true
+  },
+  {
+    "case": "zero-budget",
+    "status": 400,
+    "healthy_after": true
+  },
+  {
+    "case": "integer-overflow-budget",
+    "status": 400,
+    "healthy_after": true
+  },
+  {
+    "case": "unknown-option",
+    "status": 422,
+    "healthy_after": true
+  },
+  {
+    "case": "oversized-body",
+    "status": 413,
+    "healthy_after": true
+  },
+  {
+    "case": "too-many-input-tokens",
+    "status": 400,
+    "healthy_after": true
+  },
+  {
+    "case": "disconnect-after-first-content",
+    "following_seconds": 0.1165610860043671,
+    "healthy_after": true
+  },
+  {
+    "case": "bounded-queue-overload",
+    "statuses": [
+      "client-timeout",
+      "client-timeout",
+      "client-timeout",
+      "client-timeout",
+      "client-timeout",
+      "client-timeout",
+      "client-timeout",
+      "client-timeout",
+      429,
+      429,
+      429,
+      429
+    ],
+    "following_seconds": 0.13351412999327295,
+    "transient_retries": 1,
+    "healthy_after": true
+  }
+]

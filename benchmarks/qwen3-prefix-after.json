@@ -1,0 +1,69 @@
+{
+  "method": "4 identical long-document requests, first cold then 3 warm; same FP16 weights, temperature=0, output cap=16",
+  "request": {
+    "model": "qwen3-4b-instruct",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Fait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\nFait neutre : le ciel est bleu et la forêt est verte.\n\nRéponds uniquement par OK."
+      }
+    ],
+    "max_tokens": 16,
+    "temperature": 0
+  },
+  "runs": [
+    {
+      "trial": 0,
+      "duration_seconds": 3.0969718609994743,
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 3616,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "total_tokens": 3618
+      },
+      "content": "OK"
+    },
+    {
+      "trial": 1,
+      "duration_seconds": 1.8461835109919775,
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 3616,
+        "prompt_tokens_details": {
+          "cached_tokens": 2048
+        },
+        "total_tokens": 3618
+      },
+      "content": "OK"
+    },
+    {
+      "trial": 2,
+      "duration_seconds": 1.8476329069817439,
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 3616,
+        "prompt_tokens_details": {
+          "cached_tokens": 2048
+        },
+        "total_tokens": 3618
+      },
+      "content": "OK"
+    },
+    {
+      "trial": 3,
+      "duration_seconds": 1.8531519699899945,
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 3616,
+        "prompt_tokens_details": {
+          "cached_tokens": 2048
+        },
+        "total_tokens": 3618
+      },
+      "content": "OK"
+    }
+  ],
+  "warm_mean_seconds": 1.848989462654572
+}
