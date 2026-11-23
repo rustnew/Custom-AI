@@ -1,0 +1,56 @@
+{
+  "local_date": "2026-11-24",
+  "timezone": "Africa/Douala",
+  "implementation": "Rust CLI with reqwest and native W3C WebDriver DOM commands; no Python, Node.js or injected JavaScript",
+  "environment": {
+    "chrome": "157.0.8103.38",
+    "chromedriver": "157.0.8103.38",
+    "firefox": "159.0",
+    "geckodriver": "0.37.1",
+    "model": "Qwen3-4B-Instruct-2507 / Candle / FP16 / localhost:8080"
+  },
+  "checks": {
+    "rust_tests_passed": 45,
+    "rust_tests_command": "RUSTFLAGS='-C link-arg=-fuse-ld=bfd' cargo test --workspace --locked --offline",
+    "clippy_command": "cargo clippy --workspace --all-targets --locked --offline -- -D warnings",
+    "clippy_passed": true,
+    "format_passed": true,
+    "diff_check_passed": true,
+    "build_note": "The default LLVM linker crashed; the GNU bfd linker succeeded."
+  },
+  "live_reads": [
+    {
+      "command": "cli browse https://example.com/ --browser chrome",
+      "exit_code": 0,
+      "title": "Example Domain",
+      "dom_text_returned": true
+    },
+    {
+      "command": "cli browse https://doc.rust-lang.org/book/ --browser firefox --navigation-timeout 60",
+      "exit_code": 0,
+      "title": "The Rust Programming Language - The Rust Programming Language",
+      "dom_text_returned": true
+    }
+  ],
+  "live_agent": {
+    "browser": "chrome",
+    "source_url_provided_by_user": "https://example.com/",
+    "source_discovered_by_search": false,
+    "model_decisions": 5,
+    "double_search_actions": 1,
+    "page_read_attempts": 1,
+    "page_reads_succeeded": 1,
+    "premature_final_answer_rejected": true,
+    "citation_to_unread_source_rejected": true,
+    "final_answer_cited_read_source_1": true,
+    "exit_code": 0
+  },
+  "search_limitations": {
+    "google": "CAPTCHA or consent encountered on the test connection; no automatic bypass",
+    "bing": "No usable results; some responses explicitly reported no results and others contained no extractable results",
+    "successful_public_two_engine_research_verified": false,
+    "manual_captcha_flow": "Available with --visible; manual completion was not tested",
+    "fallback": "Explicit --source-url allows real page reading and cited answers even when search providers fail"
+  },
+  "scope": "Reference provenance is checked; factual accuracy of generated prose is not automatically proved."
+}

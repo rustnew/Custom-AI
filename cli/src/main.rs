@@ -4,13 +4,15 @@ use std::process::Command;
 use anyhow::{Context, Result, bail};
 use clap::{Parser, Subcommand};
 
+mod agent;
 mod chat;
 mod local;
+mod web;
 
 #[derive(Parser)]
 #[command(
     name = "cli",
-    about = "Pilotage du cluster custom-ai (vLLM + gateway sur k3s)"
+    about = "Modèle local, agent de recherche web et déploiement custom-ai"
 )]
 struct Cli {
     /// Répertoire contenant les manifests Kubernetes
@@ -29,6 +31,12 @@ struct Cli {
 enum Commands {
     /// Discute avec le modèle local ; sans prompt, ouvre une session interactive
     Chat(chat::Chat),
+    /// Agent local avec recherche Google/Bing et lecture des sources
+    Agent(agent::Agent),
+    /// Recherche Google/Bing sans appeler le modèle
+    Search(web::Search),
+    /// Lit une page publique dans Chrome ou Firefox, sans appeler le modèle
+    Browse(web::Read),
     /// Lance vLLM et la gateway en local, sans Kubernetes
     Serve(local::Serve),
     /// Applique tous les manifests (namespace, vllm, gateway)
@@ -51,6 +59,9 @@ async fn main() -> Result<()> {
 
     match &cli.command {
         Commands::Chat(options) => chat::run(options).await,
+        Commands::Agent(options) => agent::run(options).await,
+        Commands::Search(options) => web::run(options).await,
+        Commands::Browse(options) => web::run_read(options).await,
         Commands::Serve(options) => local::serve(options).await,
         Commands::Deploy => deploy(&cli.manifests_dir),
         Commands::Status => status(&cli.namespace),

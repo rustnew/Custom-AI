@@ -44,6 +44,46 @@ cargo run -p cli -- chat "Explique-moi simplement ce qu'est un réseau de neuron
 
 Pour un document long ou multiligne : `cargo run -p cli -- chat --file prompt.txt`. La limite de sortie est automatique par défaut. Options utiles : `--max-tokens 256`, `--temperature 0` pour une réponse déterministe et `--url http://127.0.0.1:8080`. Le client reprend `GATEWAY_API_KEY` si la gateway exige une clé.
 
+## Agent de recherche et navigation en Rust
+
+La CLI possède une boucle d'agent qui utilise le modèle local et pilote **Chrome ou Firefox** avec le protocole [WebDriver](https://www.w3.org/TR/webdriver2/). Le client, la lecture du DOM, le décodage des liens et l'orchestration sont écrits en Rust : aucun Python, Node.js, serveur MCP ou script JavaScript ajouté n'est nécessaire. L'API d'inférence reste une API texte ; le protocole d'actions JSON est géré par la CLI, sans prétendre prendre en charge les champs natifs `tools` et `tool_calls`.
+
+Prérequis : Chrome avec un [ChromeDriver compatible](https://developer.chrome.com/docs/chromedriver/get-started), ou Firefox avec [GeckoDriver](https://firefox-source-docs.mozilla.org/testing/geckodriver/Usage.html). Les pilotes sont recherchés dans `.local/bin/`, puis dans `PATH`, et peuvent être indiqués avec `--driver /chemin/du/pilote`. Sur la machine de validation : Chrome et ChromeDriver `157.0.8103.38`, Firefox `159.0` et GeckoDriver `0.37.1`. Les pilotes téléchargés dans `.local/bin/` sont ignorés par Git ; un clone du dépôt nécessite leur installation. Les navigateurs utilisent un profil temporaire séparé du profil personnel.
+
+```bash
+cargo build -p cli --locked
+
+# Recherche sur les deux moteurs, sans appeler le modèle
+./target/debug/cli search "langage Rust documentation officielle" --browser chrome
+./target/debug/cli search "langage Rust documentation officielle" --browser firefox
+
+# L'agent choisit ses recherches et les pages à lire, puis cite les sources
+./target/debug/cli agent "Recherche et compare les avantages de Rust et Go, avec des sources." --browser chrome
+./target/debug/cli agent "Recherche et compare les avantages de Rust et Go, avec des sources." --browser firefox
+
+# Lecture directe d'une page publique, sans modèle
+./target/debug/cli browse https://doc.rust-lang.org/book/ --browser firefox
+
+# Une URL fournie reste utilisable si les moteurs sont indisponibles
+./target/debug/cli agent "Résume la source fournie et cite-la." \
+  --source-url https://doc.rust-lang.org/book/ \
+  --browser chrome --report /tmp/custom-ai-recherche.json
+```
+
+Chaque action `search` interroge **Google et Bing**. Les résultats sont dédupliqués et reçoivent des identifiants stables. L'agent peut uniquement demander `search`, `read` sur un identifiant trouvé ou fourni explicitement, et `answer`. Les commandes système et le JavaScript arbitraire ne sont pas des outils disponibles. La réponse finale doit citer des pages réellement lues ; la CLI ajoute elle-même leurs URL. Cela vérifie la provenance des références, pas la véracité de chaque affirmation du modèle.
+
+Le travail est borné par défaut à huit décisions, deux recherches doubles, trois tentatives de lecture et 240 secondes. Chaque page transmise au modèle est limitée à 4 000 octets UTF-8 ; une question d'agent accepte 4 000 octets au maximum. `--file question.txt` conserve les guillemets et les retours à la ligne. Options : `--max-steps`, `--max-tokens` (1 024 par décision par défaut), `--timeout`, `--navigation-timeout`, `--browser-binary`, `--report`. Le mode `chat` conserve son comportement et son contexte habituel.
+
+**Blocages externes constatés le 24 novembre 2026 :** Google demande un CAPTCHA sur la connexion de test ; Bing renvoie des pages sans résultat, y compris pour une requête simple. Les outils signalent ces situations et n'inventent pas de résultats. La disponibilité de deux recherches publiques utiles n'est donc pas validée sur cette connexion. Pour intervenir manuellement dans une fenêtre de navigateur :
+
+```bash
+./target/debug/cli agent "Recherche la documentation officielle de Rust." --browser chrome --visible
+```
+
+En mode visible, la recherche attend jusqu'à 90 secondes pour permettre de traiter un CAPTCHA ou un consentement ; elle ne les contourne pas. Une session graphique est nécessaire. `--source-url` permet de poursuivre sur une source connue malgré ces limites. Les erreurs de navigation, de modèle, de protocole et les dépassements de durée ferment la session ; Ctrl+C annule le travail. Les URL sont limitées à HTTP(S) public et contrôlées avant la navigation et après la redirection. Ce contrôle ne constitue pas un filtrage de toutes les sous-requêtes réseau d'une page.
+
+Les 45 tests Rust utilisent notamment des serveurs HTTP et des outils simulés pour vérifier la boucle de décisions, les refus d'actions inconnues, les citations, les limites, les erreurs et la fermeture WebDriver. La lecture réelle a réussi dans Chrome et Firefox ; l'agent a aussi lu une URL fournie puis produit une réponse citée, malgré les moteurs indisponibles. Une citation vers une source non lue et une réponse prématurée ont été refusées pendant cet essai. Voir [le compte rendu de validation](benchmarks/web-tools-validation.json). Sur la machine de développement, le linker LLVM a planté à l'édition des liens ; la compilation et les tests passent avec le linker GNU : `RUSTFLAGS='-C link-arg=-fuse-ld=bfd' cargo build -p cli --locked` et la même variable pour `cargo test --workspace --locked`.
+
 ## Vitesse mesurée
 
 Sur Qwen3-4B-Instruct-2507, Candle 0.11.0, float16, une requête à la fois, après échauffement :
