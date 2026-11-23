@@ -1,0 +1,10 @@
+/target
+.venv/
+*.safetensors
+__pycache__/
+.env
+.env.*
+!.env.example
+.aws/
+.codex/
+*.gguf

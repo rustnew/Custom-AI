@@ -1,0 +1,13 @@
+# Profil Turing sm_75 : vLLM V0 + XFormers et PyTorch CUDA 12.8.
+# Les API Python utilisées par cette version de vLLM sont fixées pour éviter
+# de mélanger ce moteur avec des versions majeures plus récentes des clients.
+vllm==0.10.2
+transformers==4.55.2
+openai==1.99.9
+fastapi==0.116.1
+pydantic==2.11.7
+mistral_common==1.8.2
+ray[cgraph]==2.48.0
+protobuf==5.29.5
+msgspec==0.19.0
+pillow==11.3.0

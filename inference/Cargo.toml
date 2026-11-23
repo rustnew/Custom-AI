@@ -1,0 +1,29 @@
+[package]
+name = "inference"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "inference"
+required-features = ["cuda"]
+
+[features]
+default = []
+cuda = ["dep:candle-core", "dep:candle-nn", "dep:candle-transformers", "dep:tokenizers"]
+
+[dependencies]
+anyhow = "1.0.105"
+axum = "0.8.9"
+clap = { version = "4.6.9", features = ["derive"] }
+futures-util = "0.3.34"
+gateway = { path = "../gateway" }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+tokio = { version = "1.54.1", features = ["full"] }
+candle-core = { version = "=0.11.0", features = ["cuda"], optional = true }
+candle-nn = { version = "=0.11.0", features = ["cuda"], optional = true }
+candle-transformers = { version = "=0.11.0", features = ["cuda"], optional = true }
+tokenizers = { version = "=0.22.2", default-features = false, features = ["fancy-regex"], optional = true }
+
+[dev-dependencies]
+tower = { version = "0.5.3", features = ["util"] }

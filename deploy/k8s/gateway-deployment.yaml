@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: custom-ai
+  labels:
+    app: gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+        - name: gateway
+          image: custom-ai/gateway:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: VLLM_UPSTREAM_URL
+              value: "http://vllm.custom-ai.svc.cluster.local:8000"
+            - name: GATEWAY_BIND_ADDR
+              value: "0.0.0.0:8080"
+            - name: GATEWAY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gateway-secrets
+                  key: api-key
+                  optional: true
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 2
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 15

@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm
+  namespace: custom-ai
+  labels:
+    app: vllm
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # un seul GPU disponible : pas de rolling update en parallèle
+  selector:
+    matchLabels:
+      app: vllm
+  template:
+    metadata:
+      labels:
+        app: vllm
+    spec:
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:latest
+          args:
+            - "--model=/models/Qwen3-4B-Instruct-2507"
+            - "--served-model-name=qwen3-4b-instruct"
+            - "--dtype=float16" # GPU Turing (sm_75) : bf16 non accéléré, float16 est plus rapide
+            - "--gpu-memory-utilization=0.90"
+            - "--max-model-len=32768"
+            - "--port=8000"
+          ports:
+            - containerPort: 8000
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+          volumeMounts:
+            - name: model-storage
+              mountPath: /models/Qwen3-4B-Instruct-2507
+              readOnly: true
+            - name: dshm
+              mountPath: /dev/shm
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+      volumes:
+        - name: model-storage
+          hostPath:
+            path: /home/rustspeak/neurax-ai-lab/models/Qwen3-4B-Instruct-2507
+            type: Directory
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 2Gi

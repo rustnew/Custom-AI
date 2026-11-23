@@ -1,0 +1,128 @@
+{
+  "method": "Sequential FP16 CUDA tests on one Quadro RTX 5000 (16 GiB), cache cap 2048; OOM recovery checked; 512 MiB minimum observed headroom criterion. The final implementation additionally releases retained prefix snapshots for very long prompts.",
+  "selected_context_tokens": 28672,
+  "cases": [
+    {
+      "candidate_context": 49152,
+      "input_repetitions": 49000,
+      "status": 500,
+      "seconds": 162.92333798701293,
+      "peak_memory_mib": 15865.0,
+      "result": {
+        "error": {
+          "message": "DriverError(CUDA_ERROR_OUT_OF_MEMORY, \"out of memory\")",
+          "type": "local_inference_error"
+        }
+      },
+      "healthy_after": true
+    },
+    {
+      "candidate_context": 45056,
+      "input_repetitions": 44900,
+      "status": 500,
+      "seconds": 132.98076032602694,
+      "peak_memory_mib": 15897.0,
+      "result": {
+        "error": {
+          "message": "DriverError(CUDA_ERROR_OUT_OF_MEMORY, \"out of memory\")",
+          "type": "local_inference_error"
+        }
+      },
+      "healthy_after": true
+    },
+    {
+      "candidate_context": 40960,
+      "input_repetitions": 40800,
+      "status": 500,
+      "seconds": 132.40954801702173,
+      "peak_memory_mib": 15897.0,
+      "result": {
+        "error": {
+          "message": "DriverError(CUDA_ERROR_OUT_OF_MEMORY, \"out of memory\")",
+          "type": "local_inference_error"
+        }
+      },
+      "healthy_after": true,
+      "recovery_seconds": 0.7088123020075727
+    },
+    {
+      "candidate_context": 32768,
+      "input_repetitions": 32600,
+      "status": 500,
+      "seconds": 122.31992207199801,
+      "peak_memory_mib": 15865.0,
+      "result": {
+        "error": {
+          "message": "DriverError(CUDA_ERROR_OUT_OF_MEMORY, \"out of memory\")",
+          "type": "local_inference_error"
+        }
+      },
+      "healthy_after": true,
+      "recovery_seconds": 0.7107780709920917
+    },
+    {
+      "candidate_context": 24576,
+      "input_repetitions": 24400,
+      "status": 200,
+      "seconds": 95.70020105698495,
+      "peak_memory_mib": 14969.0,
+      "result": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "content": "",
+              "role": "assistant"
+            }
+          }
+        ],
+        "created": 1795467067,
+        "id": "chatcmpl-local-1795467067-5",
+        "model": "qwen3-4b-instruct",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 1,
+          "prompt_tokens": 24416,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 24417
+        }
+      },
+      "healthy_after": true,
+      "recovery_seconds": 0.002532188984332606
+    },
+    {
+      "window": 28672,
+      "status": 200,
+      "seconds": 130.40130130702164,
+      "peak_memory_mib": 15801.0,
+      "codes_recalled": true,
+      "reply": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "content": "PARIS7  \nLYON8  \nLILLE9",
+              "role": "assistant"
+            }
+          }
+        ],
+        "created": 1795467493,
+        "id": "chatcmpl-local-1795467493-6",
+        "model": "qwen3-4b-instruct",
+        "object": "chat.completion",
+        "usage": {
+          "completion_tokens": 12,
+          "prompt_tokens": 28535,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 28547
+        }
+      }
+    }
+  ]
+}
