@@ -430,6 +430,7 @@ dependencies = [
  "base64 0.23.1",
  "clap",
  "gateway",
+ "percent-encoding",
  "reqwest",
  "serde",
  "serde_json",

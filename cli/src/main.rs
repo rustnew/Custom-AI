@@ -31,9 +31,9 @@ struct Cli {
 enum Commands {
     /// Discute avec le modèle local ; sans prompt, ouvre une session interactive
     Chat(chat::Chat),
-    /// Agent local avec recherche Google/Bing et lecture des sources
+    /// Agent local avec recherche multi-moteurs, exploration des liens et lecture des passages
     Agent(agent::Agent),
-    /// Recherche Google/Bing sans appeler le modèle
+    /// Recherche multi-moteurs avec secours, sans appeler le modèle
     Search(web::Search),
     /// Lit une page publique dans Chrome ou Firefox, sans appeler le modèle
     Browse(web::Read),

@@ -1,0 +1,139 @@
+{
+  "local_date": "2026-11-24",
+  "timezone": "Africa/Douala",
+  "implementation": "Rust; native WebDriver and public search/content APIs",
+  "checks": {
+    "rust_tests_passed": 55,
+    "clippy_passed": true,
+    "format_passed": true,
+    "diff_check_passed": true,
+    "linker_used_for_build_and_tests": "GNU bfd (default LLVM linker crashed)"
+  },
+  "live_search": {
+    "query": "langage Rust",
+    "providers": [
+      {
+        "engine": "google",
+        "results": 0,
+        "error": "Google demande un CAPTCHA ou un consentement ; relancer avec --visible pour le traiter manuellement"
+      },
+      {
+        "engine": "bing",
+        "results": 0,
+        "error": "Bing : aucun résultat lisible (page bloquée ou sélecteurs modifiés), titre : langage Rust - Recherche"
+      },
+      {
+        "engine": "duckduckgo",
+        "results": 0,
+        "error": "DuckDuckGo demande un CAPTCHA ou un consentement ; relancer avec --visible pour le traiter manuellement"
+      },
+      {
+        "engine": "brave",
+        "results": 0,
+        "error": "Brave : aucun résultat lisible (page bloquée ou sélecteurs modifiés), titre : Captcha - Brave Search"
+      },
+      {
+        "engine": "wikipediafr",
+        "results": 5,
+        "error": null
+      },
+      {
+        "engine": "wikipediaen",
+        "results": 4,
+        "error": null
+      }
+    ],
+    "scope": "Only encyclopedia results were usable on this connection"
+  },
+  "autonomous_agent": {
+    "question": "Recherche la définition du langage Rust. Lis une source trouvée. Réponds en trois phrases maximum avec une référence. Signale le recours encyclopédique.",
+    "source_url_provided": false,
+    "status": "complete",
+    "pages_read": 1,
+    "actions": [
+      {
+        "action": "search",
+        "outcome": "executed",
+        "source_id": null
+      },
+      {
+        "action": "read",
+        "outcome": "executed",
+        "source_id": 1
+      },
+      {
+        "action": "answer",
+        "outcome": "final",
+        "source_id": null
+      }
+    ],
+    "read_sources": [
+      {
+        "id": 1,
+        "url": "https://fr.wikipedia.org/wiki/Rust_(langage)",
+        "reader": "mediawiki-api"
+      }
+    ],
+    "used_read_content": true
+  },
+  "fresh_content_exploitation": {
+    "source_url_provided": true,
+    "url": "https://doc.rust-lang.org/book/",
+    "status": "complete",
+    "pages_read": 1,
+    "read_attempts": 2,
+    "actions": [
+      {
+        "action": "open",
+        "outcome": "executed",
+        "source_id": null
+      },
+      {
+        "action": "read",
+        "outcome": "executed",
+        "source_id": 1
+      },
+      {
+        "action": "answer",
+        "outcome": "final",
+        "source_id": null
+      }
+    ],
+    "reader": "webdriver",
+    "expected_rust_version": "1.98.0",
+    "expected_cargo_edition": "2024",
+    "version_present_in_source_and_answer": true,
+    "edition_present_in_source_and_answer": true,
+    "citation_present": true
+  },
+  "deep_page_read": {
+    "url": "https://fr.wikipedia.org/wiki/Rust_(langage)",
+    "reader": "mediawiki-api",
+    "offset": 8000,
+    "next_offset": 12000,
+    "text_bytes": 4000,
+    "total_bytes": 21086,
+    "links": 16
+  },
+  "general_web_page_read": {
+    "url": "https://doc.rust-lang.org/book/ch01-01-installation.html",
+    "reader": "webdriver",
+    "total_bytes": 5505,
+    "contains_requested_term": true,
+    "links": 6
+  },
+  "execution_conditions": {
+    "ac_online": 0,
+    "battery_status": "Discharging",
+    "observed_sm_clock_mhz": 300,
+    "observed_gpu_power_watts": 43.9,
+    "model_deadline": "Follows the overall --timeout; fixed 120-second cutoff removed"
+  },
+  "limitations": {
+    "general_browser_search_providers_blocked_on_test_connection": true,
+    "brave_search_api": "Implemented and simulated in tests; no key available for a live authenticated check",
+    "universal_access_to_all_online_content": false,
+    "reference_provenance_checked": true,
+    "arbitrary_factual_accuracy_proved": false
+  }
+}

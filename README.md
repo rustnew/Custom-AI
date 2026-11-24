@@ -53,7 +53,7 @@ Prérequis : Chrome avec un [ChromeDriver compatible](https://developer.chrome.c
 ```bash
 cargo build -p cli --locked
 
-# Recherche sur les deux moteurs, sans appeler le modèle
+# Recherche avec moteurs de secours, sans appeler le modèle
 ./target/debug/cli search "langage Rust documentation officielle" --browser chrome
 ./target/debug/cli search "langage Rust documentation officielle" --browser firefox
 
@@ -70,11 +70,30 @@ cargo build -p cli --locked
   --browser chrome --report /tmp/custom-ai-recherche.json
 ```
 
-Chaque action `search` interroge **Google et Bing**. Les résultats sont dédupliqués et reçoivent des identifiants stables. L'agent peut uniquement demander `search`, `read` sur un identifiant trouvé ou fourni explicitement, et `answer`. Les commandes système et le JavaScript arbitraire ne sont pas des outils disponibles. La réponse finale doit citer des pages réellement lues ; la CLI ajoute elle-même leurs URL. Cela vérifie la provenance des références, pas la véracité de chaque affirmation du modèle.
+Chaque action `search` essaie **Google et Bing**, puis **DuckDuckGo et Brave** si aucun résultat utile n'est obtenu. Si ces moteurs restent indisponibles, les API publiques de **Wikipédia en français et en anglais** servent de secours encyclopédique. Ce dernier n'est pas un index général du Web : il ne convient pas à toutes les questions, notamment aux prix et aux événements très récents. Les CAPTCHA détectés sont mémorisés pendant la session afin d'éviter de refaire la même tentative bloquée à chaque requête. L'agent peut reformuler ses recherches, changer de langue ou utiliser `site:...` pour cibler une source.
 
-Le travail est borné par défaut à huit décisions, deux recherches doubles, trois tentatives de lecture et 240 secondes. Chaque page transmise au modèle est limitée à 4 000 octets UTF-8 ; une question d'agent accepte 4 000 octets au maximum. `--file question.txt` conserve les guillemets et les retours à la ligne. Options : `--max-steps`, `--max-tokens` (1 024 par décision par défaut), `--timeout`, `--navigation-timeout`, `--browser-binary`, `--report`. Le mode `chat` conserve son comportement et son contexte habituel.
+Pour une recherche généraliste par API, la variable `BRAVE_SEARCH_API_KEY` active en priorité [Brave Search API](https://api-dashboard.search.brave.com/documentation/guides/authentication). La clé reste dans l'environnement ; elle n'est ni sauvegardée dans un `.env` ni incluse dans les rapports. Si cette API échoue, les autres moteurs restent utilisés. Sans clé, les moteurs publics et Wikipédia restent accessibles selon leurs restrictions. Le chemin Brave API est testé avec des données simulées ; aucune clé n'était disponible pour un essai réseau authentifié. Pour saisir une clé dans zsh :
 
-**Blocages externes constatés le 24 novembre 2026 :** Google demande un CAPTCHA sur la connexion de test ; Bing renvoie des pages sans résultat, y compris pour une requête simple. Les outils signalent ces situations et n'inventent pas de résultats. La disponibilité de deux recherches publiques utiles n'est donc pas validée sur cette connexion. Pour intervenir manuellement dans une fenêtre de navigateur :
+```bash
+read -rs 'BRAVE_SEARCH_API_KEY?Clé Brave Search : '
+export BRAVE_SEARCH_API_KEY
+```
+
+Les résultats et les liens découverts reçoivent des identifiants stables, dans une limite de 32 sources par travail. L'agent dispose de `search`, `open` pour une URL HTTP(S) publique, `read` sur un identifiant et `answer`. La lecture d'une page découvre ses liens, qui peuvent ensuite être suivis. Une URL proposée par le modèle est marquée comme telle et devient une source citable seulement après lecture réussie. La réponse finale doit citer des pages réellement lues ; la CLI ajoute elle-même leurs URL. Cela vérifie la provenance des références, pas la véracité de chaque affirmation. Les actions refusées, exécutées et échouées sont distinguées dans les rapports.
+
+La lecture se fait par passages de 4 000 octets UTF-8 avec `offset`, `next_offset`, `total_bytes` et un indicateur de troncature. L'option d'outil `find` cherche une expression exacte dans le texte disponible pour lire un passage plus loin dans la page. Le texte extrait est limité à 160 000 octets par page ; les extraits conservés dans le contexte du modèle partagent un budget ajusté à sa fenêtre. Les articles Wikipédia sont d'abord lus via leur API publique de texte, avec repli sur le navigateur si nécessaire ; le champ `reader` distingue `mediawiki-api` de `webdriver`. Ce texte est un extrait fourni par Wikipédia, pas une copie de tous les éléments visuels de l'article. Un CAPTCHA ou une page de vérification reconnus ne sont pas considérés comme une source lue. Les pages rendues sous forme de texte sont prises en charge ; les images, vidéos, connexions privées et paywalls ne sont pas rendus accessibles par ces outils.
+
+Le travail est borné par défaut à **16 décisions, 4 recherches, 8 lectures de passages et 600 secondes**. Le délai d'appel au modèle suit `--timeout`, et le travail complet reste borné par ce même délai : une limite interne fixe de 120 secondes ne coupe plus prématurément les générations lentes. Une question d'agent accepte 4 000 octets au maximum. `--file question.txt` conserve les guillemets et les retours à la ligne. Options : `--max-steps`, `--max-searches`, `--max-reads`, `--max-tokens` (1 024 par décision par défaut), `--timeout`, `--navigation-timeout`, `--browser-binary`, `--report`. Les rapports intermédiaires conservent l'état `in_progress` ; une fin réussie est marquée `complete`, un échec détecté `failed`. Le mode `chat` conserve son comportement et son contexte habituel. Pour approfondir :
+
+```bash
+./target/debug/cli agent "Recherche mon sujet, recoupe les sources et indique les limites." \
+  --browser firefox --max-steps 32 --max-searches 8 --max-reads 16 --timeout 1800
+
+# Lire un passage plus loin dans une page connue
+./target/debug/cli browse https://doc.rust-lang.org/book/ --find "Installation" --browser chrome
+```
+
+**Essais du 24 novembre 2026 :** Google et DuckDuckGo demandent un CAPTCHA, Brave affiche également une vérification et Bing ne fournit pas de résultats utilisables sur la connexion de test. Le basculement public aboutit néanmoins à **neuf résultats encyclopédiques** pour « langage Rust » : cinq en français et quatre en anglais. Cela valide un secours fonctionnel, pas la disponibilité de toute la recherche Web. Pour intervenir manuellement dans une fenêtre de navigateur :
 
 ```bash
 ./target/debug/cli agent "Recherche la documentation officielle de Rust." --browser chrome --visible
@@ -82,7 +101,9 @@ Le travail est borné par défaut à huit décisions, deux recherches doubles, t
 
 En mode visible, la recherche attend jusqu'à 90 secondes pour permettre de traiter un CAPTCHA ou un consentement ; elle ne les contourne pas. Une session graphique est nécessaire. `--source-url` permet de poursuivre sur une source connue malgré ces limites. Les erreurs de navigation, de modèle, de protocole et les dépassements de durée ferment la session ; Ctrl+C annule le travail. Les URL sont limitées à HTTP(S) public et contrôlées avant la navigation et après la redirection. Ce contrôle ne constitue pas un filtrage de toutes les sous-requêtes réseau d'une page.
 
-Les 45 tests Rust utilisent notamment des serveurs HTTP et des outils simulés pour vérifier la boucle de décisions, les refus d'actions inconnues, les citations, les limites, les erreurs et la fermeture WebDriver. La lecture réelle a réussi dans Chrome et Firefox ; l'agent a aussi lu une URL fournie puis produit une réponse citée, malgré les moteurs indisponibles. Une citation vers une source non lue et une réponse prématurée ont été refusées pendant cet essai. Voir [le compte rendu de validation](benchmarks/web-tools-validation.json). Sur la machine de développement, le linker LLVM a planté à l'édition des liens ; la compilation et les tests passent avec le linker GNU : `RUSTFLAGS='-C link-arg=-fuse-ld=bfd' cargo build -p cli --locked` et la même variable pour `cargo test --workspace --locked`.
+Les **55 tests Rust** utilisent notamment des serveurs HTTP et des outils simulés pour vérifier la boucle de décisions, les moteurs de secours, l'exploration des liens, les passages, les refus d'actions inconnues, les citations, les limites, les erreurs et la fermeture WebDriver. La lecture réelle a réussi dans Chrome et Firefox ; voir [la validation initiale](benchmarks/web-tools-validation.json). Sur la machine de développement, le linker LLVM a planté à l'édition des liens ; la compilation et les tests passent avec le linker GNU : `RUSTFLAGS='-C link-arg=-fuse-ld=bfd' cargo build -p cli --locked` et la même variable pour `cargo test --workspace --locked`.
+
+La [validation élargie en conditions réelles](benchmarks/web-research-resilience.json) vérifie aussi une recherche autonome sans URL fournie : recherche, découverte d'un article, lecture par API et réponse citée, en trois décisions. Un second test sur une URL explicitement fournie vérifie l'exploitation du contenu : l'agent extrait la version Rust **1.98.0** et l'édition Cargo **2024** du livre officiel, et ces valeurs correspondent au texte récupéré. Une page d'installation hors Wikipédia a également été lue via WebDriver ; la lecture d'un passage d'article à l'offset 8 000 renvoie les 4 000 octets suivants. Les essais ont rencontré un GPU limité à 300 MHz sur batterie ; le délai modèle suit maintenant le budget global. La disponibilité d'un index généraliste par API reste à vérifier avec une clé Brave.
 
 ## Vitesse mesurée
 

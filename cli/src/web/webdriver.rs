@@ -1,7 +1,9 @@
 use std::{
+    collections::HashMap,
     net::{IpAddr, Ipv4Addr, Ipv6Addr},
     path::PathBuf,
     process::Stdio,
+    sync::Mutex,
     time::Duration,
 };
 
@@ -24,7 +26,7 @@ pub enum BrowserKind {
 
 #[derive(Args)]
 pub struct BrowserOptions {
-    /// Navigateur à piloter ; les recherches utilisent Google et Bing
+    /// Navigateur à piloter ; les moteurs de secours sont utilisés si nécessaire
     #[arg(long, value_enum, default_value = "chrome")]
     pub browser: BrowserKind,
     /// Pilote WebDriver ; sinon .local/bin/<pilote>, puis PATH
@@ -47,6 +49,7 @@ pub struct Browser {
     session: String,
     child: Child,
     pub visible: bool,
+    blocked_engines: Mutex<HashMap<String, String>>,
 }
 
 impl Browser {
@@ -98,6 +101,7 @@ impl Browser {
             session: String::new(),
             child,
             visible: options.visible,
+            blocked_engines: Mutex::new(HashMap::new()),
         };
         let deadline = Instant::now() + Duration::from_secs(10);
         loop {
@@ -204,12 +208,18 @@ impl Browser {
             Some("a:has(h3)")
         } else if host == "www.bing.com" || host == "bing.com" {
             Some("li.b_algo h2 a")
+        } else if host == "duckduckgo.com" || host.ends_with(".duckduckgo.com") {
+            Some("a.result__a, a[data-testid=result-title-a]")
+        } else if host == "search.brave.com" {
+            Some("a:has(.snippet-title), a.heading-serpresult, a.result-header")
+        } else if host.ends_with(".wikipedia.org") {
+            Some(".mw-parser-output a[href]")
         } else {
-            None
+            Some("main a[href], article a[href], [role=main] a[href]")
         };
         let mut links = Vec::new();
         if let Some(selector) = selector {
-            for element in self.elements(selector).await?.into_iter().take(10) {
+            for element in self.elements(selector).await?.into_iter().take(16) {
                 let href = self.element_value(&element, "attribute/href").await?;
                 let Some(destination) = destination(&url, &href) else {
                     continue;
@@ -221,8 +231,22 @@ impl Browser {
             }
         }
         Ok(
-            json!({"url":url.as_str(),"title":title.as_str().unwrap_or_default(),"text":super::clipped(&text,8000),"links":links}),
+            json!({"url":url.as_str(),"title":title.as_str().unwrap_or_default(),"text":super::clipped(&text,160000),"links":links,"total_bytes":text.len(),"content_truncated":text.len() > 160000,"reader":"webdriver"}),
         )
+    }
+
+    pub fn blocked_engine(&self, engine: super::Engine) -> Option<String> {
+        self.blocked_engines
+            .lock()
+            .ok()?
+            .get(&format!("{engine:?}"))
+            .cloned()
+    }
+
+    pub fn block_engine(&self, engine: super::Engine, message: &str) {
+        if let Ok(mut blocked) = self.blocked_engines.lock() {
+            blocked.insert(format!("{engine:?}"), super::clipped(message, 300));
+        }
     }
 
     async fn elements(&self, selector: &str) -> Result<Vec<String>> {
@@ -283,6 +307,11 @@ impl Browser {
 fn destination(base: &Url, href: &str) -> Option<String> {
     let url = base.join(href).ok()?;
     let host = url.host_str()?;
+    if (host == "duckduckgo.com" || host.ends_with(".duckduckgo.com"))
+        && let Some((_, destination)) = url.query_pairs().find(|(key, _)| key == "uddg")
+    {
+        return Some(destination.into_owned());
+    }
     if (host == "www.google.com" || host == "google.com") && url.path() == "/url" {
         return url
             .query_pairs()
@@ -475,6 +504,9 @@ mod tests {
                 "/session/test/elements",
                 post(|Json(body): Json<Value>| async move {
                     assert_eq!(body["using"], "css selector");
+                    if body["value"] == "main a[href], article a[href], [role=main] a[href]" {
+                        return Json(json!({"value":[]}));
+                    }
                     assert_eq!(body["value"], "main, article, [role=main]");
                     Json(json!({"value":[{"element-6066-11e4-a52e-4f735466cecf":"root"}]}))
                 }),
@@ -507,6 +539,7 @@ mod tests {
             session: "test".into(),
             child,
             visible: false,
+            blocked_engines: Mutex::new(HashMap::new()),
         };
         assert_eq!(
             browser.command(Method::GET, "/status", None).await.unwrap()["ready"],
@@ -542,6 +575,15 @@ mod tests {
         assert!(destination(&bing, "/ck/a?u=a1!!!!").is_none());
         assert_eq!(
             destination(&google, "https://example.com/").unwrap(),
+            "https://example.com/"
+        );
+        let duck = Url::parse("https://html.duckduckgo.com/html/").unwrap();
+        assert_eq!(
+            destination(
+                &duck,
+                "//duckduckgo.com/l/?uddg=https%3A%2F%2Fexample.com%2F"
+            )
+            .unwrap(),
             "https://example.com/"
         );
     }
