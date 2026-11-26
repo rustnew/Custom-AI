@@ -1,0 +1,645 @@
+{
+  "date": "2026-11-25",
+  "opencode_version": "2.2.6",
+  "provider": "customai",
+  "model_id": "qwen3-4b-instruct",
+  "configuration": {
+    "baseURL": "http://127.0.0.1:8080/v1",
+    "context": 28672,
+    "output_limit": 2048,
+    "prefix_cache_tokens": 7680,
+    "reasoning_supported": false,
+    "tools": true,
+    "input": [
+      "text"
+    ],
+    "global_provider_registered": true
+  },
+  "compatibility_fixes": [
+    "Function tools and Qwen native chat template",
+    "Assistant tool_calls and correlated tool results",
+    "JSON and SSE tool call conversion, malformed call rejection",
+    "Streaming usage accounting",
+    "reasoning_effort accepted as an Instruct compatibility no-op"
+  ],
+  "native_skills": [
+    {
+      "name": "built-in-browser",
+      "expected_tool": "skill",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 77.89582440099912,
+      "tools": [
+        {
+          "name": "skill",
+          "status": "completed",
+          "input": {
+            "id": "built-in-browser"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "SKILL_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/skills-built-in-browser.jsonl",
+      "skill_content_returned": true,
+      "final_confirmation": true
+    },
+    {
+      "name": "chrome-browser",
+      "expected_tool": "skill",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 137.0853089519951,
+      "tools": [
+        {
+          "name": "skill",
+          "status": "completed",
+          "input": {
+            "id": "chrome-browser"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "SKILL_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/skills-chrome-browser.jsonl",
+      "skill_content_returned": true,
+      "final_confirmation": true
+    },
+    {
+      "name": "complete-and-verify",
+      "expected_tool": "skill",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 115.39234247599961,
+      "tools": [
+        {
+          "name": "skill",
+          "status": "completed",
+          "input": {
+            "id": "complete-and-verify"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "SKILL_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/skills-complete-and-verify.jsonl",
+      "skill_content_returned": true,
+      "final_confirmation": true
+    },
+    {
+      "name": "computer-use",
+      "expected_tool": "skill",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 18.56070965298568,
+      "tools": [
+        {
+          "name": "skill",
+          "status": "completed",
+          "input": {
+            "id": "computer-use"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "SKILL_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/skills-computer-use.jsonl",
+      "skill_content_returned": true,
+      "final_confirmation": true
+    },
+    {
+      "name": "deep-research",
+      "expected_tool": "skill",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 20.828862194000976,
+      "tools": [
+        {
+          "name": "skill",
+          "status": "completed",
+          "input": {
+            "id": "deep-research"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "SKILL_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/skills-deep-research.jsonl",
+      "skill_content_returned": true,
+      "final_confirmation": true
+    },
+    {
+      "name": "docs",
+      "expected_tool": "skill",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 10.737995054019848,
+      "tools": [
+        {
+          "name": "skill",
+          "status": "completed",
+          "input": {
+            "id": "docs"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "SKILL_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/skills-docs.jsonl",
+      "skill_content_returned": true,
+      "final_confirmation": true
+    },
+    {
+      "name": "docx",
+      "expected_tool": "skill",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 20.210586470988346,
+      "tools": [
+        {
+          "name": "skill",
+          "status": "completed",
+          "input": {
+            "id": "docx"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "SKILL_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/skills-docx.jsonl",
+      "skill_content_returned": true,
+      "final_confirmation": true
+    },
+    {
+      "name": "google-workspace",
+      "expected_tool": "skill",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 22.214952361013275,
+      "tools": [
+        {
+          "name": "skill",
+          "status": "completed",
+          "input": {
+            "id": "google-workspace"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "SKILL_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/skills-google-workspace.jsonl",
+      "skill_content_returned": true,
+      "final_confirmation": true
+    },
+    {
+      "name": "import-memory",
+      "expected_tool": "skill",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 15.799402230011765,
+      "tools": [
+        {
+          "name": "skill",
+          "status": "completed",
+          "input": {
+            "id": "import-memory"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "SKILL_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/skills-import-memory.jsonl",
+      "skill_content_returned": true,
+      "final_confirmation": true
+    },
+    {
+      "name": "morning",
+      "expected_tool": "skill",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 23.503793771000346,
+      "tools": [
+        {
+          "name": "skill",
+          "status": "completed",
+          "input": {
+            "id": "morning"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "SKILL_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/skills-morning.jsonl",
+      "skill_content_returned": true,
+      "final_confirmation": true
+    },
+    {
+      "name": "opencode",
+      "expected_tool": "skill",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 16.82402506301878,
+      "tools": [
+        {
+          "name": "skill",
+          "status": "completed",
+          "input": {
+            "id": "opencode"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "SKILL_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/skills-opencode.jsonl",
+      "skill_content_returned": true,
+      "final_confirmation": true
+    },
+    {
+      "name": "pdf",
+      "expected_tool": "skill",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 16.82704678797745,
+      "tools": [
+        {
+          "name": "skill",
+          "status": "completed",
+          "input": {
+            "id": "pdf"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "SKILL_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/skills-pdf.jsonl",
+      "skill_content_returned": true,
+      "final_confirmation": true
+    },
+    {
+      "name": "pptx",
+      "expected_tool": "skill",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 30.868303691997426,
+      "tools": [
+        {
+          "name": "skill",
+          "status": "completed",
+          "input": {
+            "id": "pptx"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "\nSKILL_OK SKILL_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/skills-pptx.jsonl",
+      "skill_content_returned": true,
+      "final_confirmation": true
+    },
+    {
+      "name": "report",
+      "expected_tool": "skill",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 31.366292519989656,
+      "tools": [
+        {
+          "name": "skill",
+          "status": "completed",
+          "input": {
+            "id": "report"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "\nSKILL_OK SKILL_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/skills-report.jsonl",
+      "skill_content_returned": true,
+      "final_confirmation": true
+    },
+    {
+      "name": "skill-creator",
+      "expected_tool": "skill",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 56.375097734999144,
+      "tools": [
+        {
+          "name": "skill",
+          "status": "completed",
+          "input": {
+            "id": "skill-creator"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "\nSKILL_OK SKILL_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/skills-skill-creator.jsonl",
+      "skill_content_returned": true,
+      "final_confirmation": true
+    },
+    {
+      "name": "xlsx",
+      "expected_tool": "skill",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 36.45260198699543,
+      "tools": [
+        {
+          "name": "skill",
+          "status": "completed",
+          "input": {
+            "id": "xlsx"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "\nSKILL_OK SKILL_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/skills-xlsx.jsonl",
+      "skill_content_returned": true,
+      "final_confirmation": true
+    }
+  ],
+  "native_tools": [
+    {
+      "name": "glob",
+      "expected_tool": "glob",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 45.8738928080129,
+      "tools": [
+        {
+          "name": "glob",
+          "status": "completed",
+          "input": {
+            "path": ".",
+            "pattern": "*.txt"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "GLOB_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/tools-glob.jsonl",
+      "output_verified": true
+    },
+    {
+      "name": "grep",
+      "expected_tool": "grep",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 33.30247143399902,
+      "tools": [
+        {
+          "name": "grep",
+          "status": "completed",
+          "input": {
+            "path": "/tmp/customai-opencode-tools-audit/sample.txt",
+            "pattern": "ALPHA_LOCAL"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "GREP_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/tools-grep.jsonl",
+      "output_verified": true
+    },
+    {
+      "name": "read",
+      "expected_tool": "read",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 54.78062635700917,
+      "tools": [
+        {
+          "name": "read",
+          "status": "completed",
+          "input": {
+            "path": "/tmp/customai-opencode-tools-audit/sample.txt"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "READ_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/tools-read.jsonl",
+      "output_verified": true
+    },
+    {
+      "name": "edit",
+      "expected_tool": "edit",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 25.221570540976245,
+      "tools": [
+        {
+          "name": "edit",
+          "status": "completed",
+          "input": {
+            "newString": "BETA_LOCAL",
+            "oldString": "ALPHA_LOCAL",
+            "path": "/tmp/customai-opencode-tools-audit/sample.txt"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "EDIT_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/tools-edit.jsonl",
+      "file_content_verified": true
+    },
+    {
+      "name": "shell",
+      "expected_tool": "shell",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 5.929328487982275,
+      "tools": [
+        {
+          "name": "shell",
+          "status": "completed",
+          "input": {
+            "command": "printf SHELL_LOCAL_OK"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "SHELL_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/tools-shell.jsonl",
+      "output_verified": true
+    },
+    {
+      "name": "execute",
+      "expected_tool": "execute",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 7.731803744012723,
+      "tools": [
+        {
+          "name": "execute",
+          "status": "completed",
+          "input": {
+            "code": "return {value: 21 * 2, marker: \"EXECUTE_LOCAL_OK\"}"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "\nEXECUTE_OK EXECUTE_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/tools-execute.jsonl",
+      "output_verified": true
+    },
+    {
+      "name": "write",
+      "expected_tool": "write",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 7.782499978988199,
+      "tools": [
+        {
+          "name": "write",
+          "status": "completed",
+          "input": {
+            "content": "WRITE_LOCAL_OK",
+            "path": "/tmp/customai-opencode-tools-audit/output.txt"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "\nWRITE_OK WRITE_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/tools-write.jsonl",
+      "file_content_verified": true
+    },
+    {
+      "name": "webfetch",
+      "expected_tool": "webfetch",
+      "exit_code": 0,
+      "timeout": false,
+      "seconds": 12.899653214990394,
+      "tools": [
+        {
+          "name": "webfetch",
+          "status": "completed",
+          "input": {
+            "format": "text",
+            "url": "https://example.com"
+          },
+          "error": null
+        }
+      ],
+      "errors": [],
+      "text": "WEBFETCH_OK",
+      "tool_completed": true,
+      "log": "/tmp/customai-opencode-audit-logs/tools-webfetch.jsonl",
+      "output_verified": true
+    },
+    {
+      "name": "websearch",
+      "expected_tool": "websearch",
+      "exit_code": 1,
+      "timeout": false,
+      "seconds": 5.9280405240133405,
+      "tools": [
+        {
+          "name": "websearch",
+          "status": "error",
+          "input": {
+            "query": "site:rust-lang.org Rust language"
+          },
+          "error": "Web search cancelled"
+        }
+      ],
+      "errors": [
+        {
+          "type": "unknown",
+          "message": "Cancelled a request for input this run cannot answer: Web Search"
+        }
+      ],
+      "text": "WEBSEARCH_FAILED",
+      "tool_completed": false,
+      "log": "/tmp/customai-opencode-audit-logs/tools-websearch.jsonl"
+    }
+  ],
+  "protocol_only_tools": [
+    {
+      "name": "question",
+      "reason": "Interactive question flow not exercised by this non-interactive audit."
+    },
+    {
+      "name": "subagent",
+      "reason": "No live delegation performed; generic function transport tested."
+    },
+    {
+      "name": "experimental_image_generate",
+      "reason": "No image generated; requires a separate configured image provider. Qwen itself is text-only."
+    }
+  ],
+  "summary": {
+    "skills_loaded_and_final_confirmation": 16,
+    "tools_executed_with_verified_result": 8,
+    "additional_skill_tool_executed": true,
+    "websearch": "Tool call reached OpenCode; CLI cancelled an integration selection input named Web Search. Select/configure a search integration in the TUI.",
+    "all_13_function_names_transport_tested": true,
+    "tests_passed": 67,
+    "format_check": "passed",
+    "clippy_workspace_all_targets": "passed",
+    "cuda_release_build": "passed"
+  },
+  "local_usage": {
+    "request_count_quota": null,
+    "daily_credit_quota": null,
+    "active_gpu_generations": 1,
+    "queue_capacity": 8,
+    "note": "No quota counter or billing service in the local engine/gateway. OpenCode explicitly selects the localhost provider. Context, output length, memory, queue and external integration limits still apply."
+  },
+  "limits": [
+    "Loading skills verifies native skill invocation and ingestion, not completion of every possible skill workflow.",
+    "External browser, workspace, image and other services require their own tools, credentials and setup.",
+    "This 4B text model has no image understanding.",
+    "Live audit does not establish equal programming accuracy to larger models."
+  ],
+  "performance_report": "opencode-local-performance.json",
+  "method": "Native opencode --standalone run --model customai/qwen3-4b-instruct, isolated temporary fixtures, JSONL tool events checked independently from the model final text. Skill tests load instructions and confirm receipt; they do not execute their workflows."
+}

@@ -1,4 +1,5 @@
 use std::{
+    collections::VecDeque,
     convert::Infallible,
     sync::atomic::{AtomicU64, Ordering},
     time::{Duration, SystemTime, UNIX_EPOCH},
@@ -12,7 +13,6 @@ use axum::{
     routing::{get, post},
 };
 use futures_util::stream;
-use serde::Deserialize;
 use serde_json::{Value, json};
 use tokio::sync::mpsc;
 
@@ -21,80 +21,10 @@ pub mod worker;
 
 static NEXT_ID: AtomicU64 = AtomicU64::new(1);
 
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct ChatRequest {
-    pub model: String,
-    pub messages: Vec<Message>,
-    #[serde(default, alias = "max_completion_tokens")]
-    pub max_tokens: Option<usize>,
-    #[serde(default = "default_temperature")]
-    pub temperature: f64,
-    #[serde(default)]
-    pub stream: bool,
-}
-
-fn default_temperature() -> f64 {
-    0.7
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Message {
-    pub role: String,
-    pub content: String,
-}
-
-impl ChatRequest {
-    pub fn prompt(&self, model: &str, max_context: usize) -> Result<String, &'static str> {
-        if self.model != model {
-            return Err("modèle inconnu");
-        }
-        if self.messages.is_empty() {
-            return Err("messages ne doit pas être vide");
-        }
-        if self
-            .max_tokens
-            .is_some_and(|tokens| tokens == 0 || tokens >= max_context)
-        {
-            return Err("max_tokens doit être positif et inférieur au contexte");
-        }
-        if !self.temperature.is_finite() || !(0.0..=2.0).contains(&self.temperature) {
-            return Err("temperature doit être comprise entre 0 et 2");
-        }
-        let mut prompt = String::new();
-        for message in &self.messages {
-            if !matches!(message.role.as_str(), "system" | "user" | "assistant") {
-                return Err("les rôles acceptés sont system, user et assistant");
-            }
-            prompt.push_str(&format!(
-                "<|im_start|>{}\n{}<|im_end|>\n",
-                message.role, message.content
-            ));
-        }
-        prompt.push_str("<|im_start|>assistant\n");
-        Ok(prompt)
-    }
-
-    /// Un budget explicite reste strict ; sans budget, utilise tout le contexte restant.
-    pub fn completion_budget(
-        &self,
-        prompt_tokens: usize,
-        max_context: usize,
-    ) -> Result<usize, &'static str> {
-        let remaining = max_context
-            .checked_sub(prompt_tokens)
-            .filter(|remaining| *remaining > 0)
-            .ok_or("le prompt ne laisse aucune place pour une réponse")?;
-        match self.max_tokens {
-            Some(tokens) if tokens == 0 || tokens > remaining => {
-                Err("prompt et réponse demandée dépassent le contexte disponible")
-            }
-            Some(tokens) => Ok(tokens),
-            None => Ok(remaining),
-        }
-    }
-}
+mod protocol;
+mod tool_output;
+pub use protocol::{ChatRequest, Message};
+use tool_output::ToolOutput;
 
 pub struct Job {
     pub request: ChatRequest,
@@ -224,6 +154,11 @@ async fn chat(
         Err(message) => return error(StatusCode::BAD_REQUEST, message),
     };
     let streaming = request.stream;
+    let include_usage = request
+        .stream_options
+        .as_ref()
+        .is_some_and(|options| options.include_usage);
+    let mut output = ToolOutput::new(&request, "");
     let (sender, mut events) = mpsc::channel(16);
     if let Err(failure) = state.jobs.try_send(Job {
         request,
@@ -260,39 +195,96 @@ async fn chat(
         "chatcmpl-local-{created}-{}",
         NEXT_ID.fetch_add(1, Ordering::Relaxed)
     );
+    output.set_id(&id);
     if streaming {
         let prefix = json!({"id":id, "object":"chat.completion.chunk", "created":created, "model":state.model});
-        return streaming_response(events, prefix);
+        return streaming_response(
+            events,
+            prefix,
+            output,
+            prompt_tokens,
+            cached_tokens,
+            include_usage,
+        );
     }
-    let mut text = String::new();
     while let Some(event) = events.recv().await {
         match event {
-            GenerationEvent::Delta(delta) => text.push_str(&delta),
-            GenerationEvent::Finished { tokens, reason } => return Json(json!({
-                "id":id,"object":"chat.completion","created":created,"model":state.model,
-                "choices":[{"index":0,"message":{"role":"assistant","content":text},"finish_reason":reason}],
-                "usage":{"prompt_tokens":prompt_tokens,"completion_tokens":tokens,"total_tokens":prompt_tokens+tokens,
-                    "prompt_tokens_details":{"cached_tokens":cached_tokens}}
-            })).into_response(),
+            GenerationEvent::Delta(delta) => {
+                if let Err(message) = output.push(&delta) {
+                    return error(StatusCode::BAD_GATEWAY, message);
+                }
+            }
+            GenerationEvent::Finished { tokens, reason } => {
+                if let Err(message) = output.finish() {
+                    return error(StatusCode::BAD_GATEWAY, message);
+                }
+                return Json(json!({
+                    "id":id,"object":"chat.completion","created":created,"model":state.model,
+                    "choices":[{"index":0,"message":output.message(),"finish_reason":output.finish_reason(reason)}],
+                    "usage": usage(prompt_tokens, cached_tokens, tokens)
+                })).into_response();
+            }
             GenerationEvent::Failed(failure) => return error(failure.status, failure.message),
-            GenerationEvent::Started { .. } => {},
+            GenerationEvent::Started { .. } => {}
         }
     }
     error(StatusCode::SERVICE_UNAVAILABLE, "génération interrompue")
 }
 
+fn usage(prompt_tokens: usize, cached_tokens: usize, completion_tokens: usize) -> Value {
+    json!({
+        "prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens,
+        "total_tokens": prompt_tokens + completion_tokens,
+        "prompt_tokens_details": {"cached_tokens": cached_tokens}
+    })
+}
+
 struct StreamState {
     events: mpsc::Receiver<GenerationEvent>,
     prefix: Value,
+    output: ToolOutput,
+    prompt_tokens: usize,
+    cached_tokens: usize,
+    include_usage: bool,
+    queued: VecDeque<Value>,
     sent_role: bool,
     terminal: bool,
     done: bool,
 }
 
-fn streaming_response(events: mpsc::Receiver<GenerationEvent>, prefix: Value) -> Response {
+impl StreamState {
+    fn delta(&self, delta: Value, reason: Option<&str>) -> Value {
+        let mut chunk = self.prefix.clone();
+        chunk["choices"] = json!([{"index":0,"delta":delta,"finish_reason":reason}]);
+        if self.include_usage {
+            chunk["usage"] = Value::Null;
+        }
+        chunk
+    }
+
+    fn fail(&mut self, message: &str) {
+        self.terminal = true;
+        self.queued
+            .push_back(json!({"error":{"message":message,"type":"local_inference_error"}}));
+    }
+}
+
+fn streaming_response(
+    events: mpsc::Receiver<GenerationEvent>,
+    prefix: Value,
+    output: ToolOutput,
+    prompt_tokens: usize,
+    cached_tokens: usize,
+    include_usage: bool,
+) -> Response {
     let state = StreamState {
         events,
         prefix,
+        output,
+        prompt_tokens,
+        cached_tokens,
+        include_usage,
+        queued: VecDeque::new(),
         sent_role: false,
         terminal: false,
         done: false,
@@ -301,35 +293,52 @@ fn streaming_response(events: mpsc::Receiver<GenerationEvent>, prefix: Value) ->
         if state.done {
             return None;
         }
-        let mut chunk = state.prefix.clone();
-        let data = if !state.sent_role {
-            state.sent_role = true;
-            chunk["choices"] =
-                json!([{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}]);
-            chunk.to_string()
-        } else if state.terminal {
-            state.done = true;
-            "[DONE]".to_owned()
-        } else {
+        let data = loop {
+            if !state.sent_role {
+                state.sent_role = true;
+                break state
+                    .delta(json!({"role":"assistant","content":""}), None)
+                    .to_string();
+            }
+            if let Some(chunk) = state.queued.pop_front() {
+                break chunk.to_string();
+            }
+            if state.terminal {
+                state.done = true;
+                break "[DONE]".to_owned();
+            }
             match state.events.recv().await {
-                Some(GenerationEvent::Delta(text)) => {
-                    chunk["choices"] =
-                        json!([{"index":0,"delta":{"content":text},"finish_reason":null}]);
-                    chunk.to_string()
-                }
-                Some(GenerationEvent::Finished { reason, .. }) => {
-                    state.terminal = true;
-                    chunk["choices"] = json!([{"index":0,"delta":{},"finish_reason":reason}]);
-                    chunk.to_string()
-                }
-                event => {
-                    state.terminal = true;
-                    let message = match event {
-                        Some(GenerationEvent::Failed(failure)) => failure.message,
-                        _ => "génération interrompue".to_owned(),
-                    };
-                    json!({"error":{"message":message,"type":"local_inference_error"}}).to_string()
-                }
+                Some(GenerationEvent::Delta(text)) => match state.output.push(&text) {
+                    Ok(deltas) => {
+                        for delta in deltas {
+                            let chunk = state.delta(delta, None);
+                            state.queued.push_back(chunk);
+                        }
+                    }
+                    Err(message) => state.fail(message),
+                },
+                Some(GenerationEvent::Finished { tokens, reason }) => match state.output.finish() {
+                    Ok(deltas) => {
+                        for delta in deltas {
+                            let chunk = state.delta(delta, None);
+                            state.queued.push_back(chunk);
+                        }
+                        let reason = state.output.finish_reason(reason);
+                        let chunk = state.delta(json!({}), Some(reason));
+                        state.queued.push_back(chunk);
+                        if state.include_usage {
+                            let mut chunk = state.prefix.clone();
+                            chunk["choices"] = json!([]);
+                            chunk["usage"] =
+                                usage(state.prompt_tokens, state.cached_tokens, tokens);
+                            state.queued.push_back(chunk);
+                        }
+                        state.terminal = true;
+                    }
+                    Err(message) => state.fail(message),
+                },
+                Some(GenerationEvent::Failed(failure)) => state.fail(&failure.message),
+                _ => state.fail("génération interrompue"),
             }
         };
         Some((Ok::<_, Infallible>(Event::default().data(data)), state))

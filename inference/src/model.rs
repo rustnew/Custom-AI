@@ -7,13 +7,10 @@ use std::{
 use anyhow::{Context, Result, ensure};
 use candle_core::{DType, Device, Tensor};
 use candle_nn::VarBuilder;
-use candle_transformers::{
-    generation::LogitsProcessor,
-    models::qwen3::{Config, ModelForCausalLM},
-};
+use candle_transformers::models::qwen3::{Config, ModelForCausalLM};
 use inference::{
     GenerationEvent, GenerationFailure, Job,
-    prefix_cache::{PREFILL_BLOCK_SIZE, PrefixCache},
+    prefix_cache::{PrefixCache, prefill_block_size},
     worker::Generator,
 };
 use tokenizers::Tokenizer;
@@ -31,6 +28,7 @@ pub struct Engine {
 struct PrefixState {
     model: ModelForCausalLM,
     logits: Tensor,
+    block_size: usize,
 }
 
 #[derive(serde::Deserialize)]
@@ -106,9 +104,13 @@ impl Engine {
                 return Ok(());
             }
         };
+        let block_size = prefill_block_size(prompt.len());
         let cached = self
             .prefix_cache
             .lookup(prompt)
+            // Un préfixe calculé en blocs de 512 ne remplace pas un calcul
+            // en blocs de 128 : leurs arrondis FP16 peuvent différer.
+            .filter(|(_, state)| state.block_size == block_size)
             .map(|(length, state)| (length, state.clone()));
         // Pour les très longues entrées, consomme un préfixe existant mais ne
         // garde pas une seconde copie du KV : cette marge revient au contexte.
@@ -136,15 +138,13 @@ impl Engine {
         } else {
             0
         };
-        for (index, chunk) in prompt[cached_tokens..]
-            .chunks(PREFILL_BLOCK_SIZE)
-            .enumerate()
-        {
+        let mut queued_tokens = 0;
+        for (index, chunk) in prompt[cached_tokens..].chunks(block_size).enumerate() {
             if job.events.is_closed() {
                 return Ok(());
             }
             let input = Tensor::new(chunk, &self.device)?.unsqueeze(0)?;
-            let offset = cached_tokens + index * PREFILL_BLOCK_SIZE;
+            let offset = cached_tokens + index * block_size;
             let next_logits = self.model.forward(&input, offset)?;
             if offset + chunk.len() == cache_target && cache_target > cached_tokens {
                 self.prefix_cache.store(
@@ -152,22 +152,27 @@ impl Engine {
                     PrefixState {
                         model: self.model.clone(),
                         logits: next_logits.clone(),
+                        block_size,
                     },
                 );
             }
             logits = Some(next_logits);
             // Borne aussi le travail CUDA déjà soumis : l'annulation d'un long
             // prompt ne doit pas laisser tout son préremplissage dans la file GPU.
-            if (index + 1).is_multiple_of(2) {
+            queued_tokens += chunk.len();
+            if queued_tokens >= 256 {
                 self.device.synchronize()?;
+                queued_tokens = 0;
             }
         }
         let mut logits = logits.context("prompt vide")?;
-        let mut sampler = LogitsProcessor::new(
-            42,
-            (job.request.temperature > 0.0).then_some(job.request.temperature),
-            None,
-        );
+        let temperature = job.request.temperature;
+        if temperature > 0.0 {
+            // La graine interne reste fixe par requête, comme avec l'ancien sampler.
+            // Le nouvel algorithme conserve une loi de tirage équivalente, pas la
+            // même séquence de tokens que WeightedIndex sur CPU.
+            self.device.set_seed(42)?;
+        }
         let mut decoder = self.tokenizer.decode_stream(true);
         let mut reason = "length";
         let mut count = 0;
@@ -176,7 +181,7 @@ impl Engine {
                 return Ok(());
             }
             let scores = logits.squeeze(0)?.squeeze(0)?.to_dtype(DType::F32)?;
-            let token = sampler.sample(&scores)?;
+            let token = sample_on_device(&scores, temperature)?;
             count += 1;
             if self.eos.contains(&token) {
                 reason = "stop";
@@ -205,6 +210,32 @@ impl Engine {
     }
 }
 
+/// Choisit le prochain token sans copier tout le vocabulaire vers le CPU : un seul entier revient du GPU.
+/// À température nulle, c'est l'argmax (déjà sur GPU avec Candle). Sinon, le
+/// tirage Gumbel évite le transfert du vecteur de probabilités vers le CPU.
+fn sample_on_device(scores: &Tensor, temperature: f64) -> Result<u32> {
+    let chosen = if temperature > 0.0 {
+        let minus_gumbel = minus_gumbel(scores)?;
+        // argmax(logits/T + G) = argmax(logits + T*G), sans division des logits.
+        if temperature == 1.0 {
+            (scores - minus_gumbel)?.argmax(0)?
+        } else {
+            (scores + (minus_gumbel * -temperature)?)?.argmax(0)?
+        }
+    } else {
+        scores.argmax(0)?
+    };
+    Ok(chosen.to_scalar::<u32>()?)
+}
+
+fn minus_gumbel(scores: &Tensor) -> Result<Tensor> {
+    // cuRAND inclut 1 dans son intervalle. La borne supérieure doit rester
+    // strictement sous 1 pour éviter log(-log(1)) = -inf.
+    let upper = f32::from_bits(1.0_f32.to_bits() - 1);
+    let uniform = Tensor::rand(1e-9_f32, upper, scores.shape(), scores.device())?;
+    Ok(uniform.log()?.neg()?.log()?)
+}
+
 impl Generator for Engine {
     fn generate(&mut self, job: &Job) -> std::result::Result<(), GenerationFailure> {
         self.model.clear_kv_cache();
@@ -219,5 +250,68 @@ impl Generator for Engine {
         self.device
             .synchronize()
             .map_err(|error| format!("contexte CUDA indisponible après récupération : {error}"))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn zero_temperature_keeps_the_existing_greedy_choice() -> Result<()> {
+        let scores = Tensor::new(&[-10_f32, 2., 0.5], &Device::Cpu)?;
+        let mut old = candle_transformers::generation::LogitsProcessor::new(42, None, None);
+        assert_eq!(sample_on_device(&scores, 0.)?, old.sample(&scores)?);
+        Ok(())
+    }
+
+    #[test]
+    fn positive_temperature_follows_the_expected_categorical_probabilities() -> Result<()> {
+        let scores = Tensor::new(&[0_f32, 3_f32.ln()], &Device::Cpu)?;
+        for (temperature, expected) in [(1., 0.75), (0.5, 0.9)] {
+            let mut second = 0;
+            for _ in 0..4096 {
+                second += usize::from(sample_on_device(&scores, temperature)? == 1);
+            }
+            let observed = second as f64 / 4096.;
+            assert!(
+                (observed - expected).abs() < 0.05,
+                "T={temperature}: {observed}, attendu {expected}"
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "requiert un GPU CUDA ; exécuté explicitement pendant la validation"]
+    fn cuda_gumbel_noise_stays_finite_across_large_vocabulary_draws() -> Result<()> {
+        let device = Device::new_cuda(0)?;
+        device.set_seed(299792458)?;
+        let count = 1usize << 24;
+        let scores = Tensor::zeros(count, DType::F32, &device)?;
+        for _ in 0..8 {
+            let noise = minus_gumbel(&scores)?;
+            let finite = noise
+                .abs()?
+                .lt(f32::INFINITY)?
+                .to_dtype(DType::U32)?
+                .sum_all()?
+                .to_scalar::<u32>()?;
+            assert_eq!(finite as usize, count);
+        }
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "requiert un GPU CUDA ; exécuté explicitement pendant la validation"]
+    fn cuda_sampling_repeats_when_the_request_seed_is_reset() -> Result<()> {
+        let device = Device::new_cuda(0)?;
+        let scores = Tensor::new(&[0_f32, 1., 2., 3.], &device)?;
+        let sequence = || -> Result<Vec<u32>> {
+            device.set_seed(42)?;
+            (0..64).map(|_| sample_on_device(&scores, 0.7)).collect()
+        };
+        assert_eq!(sequence()?, sequence()?);
+        Ok(())
     }
 }

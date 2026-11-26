@@ -24,9 +24,9 @@ Pour choisir un autre emplacement ou une autre adresse :
 ./target/release/inference --model /chemin/vers/Qwen3-4B-Instruct-2507 --bind 127.0.0.1:8080
 ```
 
-Ce moteur local expose `/v1/models` et `/v1/chat/completions`, avec réponses JSON ou SSE. Il accepte les messages texte `system`, `user`, `assistant`, `max_tokens` (ou `max_completion_tokens`), `temperature` et `stream`. Les outils, images, contraintes JSON et autres paramètres OpenAI ne sont pas encore pris en charge dans ce mode ; les champs inconnus sont refusés.
+Ce moteur local expose `/v1/models` et `/v1/chat/completions`, avec réponses JSON ou SSE. Il accepte les messages texte `system`, `developer`, `user`, `assistant` et `tool`, `max_tokens` (ou `max_completion_tokens`), `temperature` et `stream`. Les appels d'outils de type `function` utilisent le template fourni avec Qwen : définitions `tools`, historique `tool_calls`, résultats associés par `tool_call_id`, choix `auto`, `none`, `required` ou fonction nommée et option `parallel_tool_calls`. Les balises générées sont converties en appels OpenAI JSON ou SSE ; un appel incomplet, invalide ou inconnu est signalé comme une erreur. `stream_options.include_usage` ajoute le bilan des tokens en fin de flux. `reasoning_effort` est accepté pour la compatibilité avec OpenCode, sans effet sur ce modèle Instruct qui ne possède pas de mode de raisonnement réglable. Les images, schémas d'outils stricts et contraintes JSON ne sont pas pris en charge ; les autres champs inconnus sont refusés.
 
-Une seule génération utilise le GPU à la fois, avec huit requêtes en attente au maximum. Le contexte par défaut est de **28 672 tokens partagés entre le prompt et la réponse**. Sans `max_tokens`, la réponse peut utiliser tout le contexte restant et s'arrête normalement au token de fin du modèle. Un préfixe exact de 2 048 tokens au maximum peut être réutilisé entre requêtes ; les préfixes différents ne sont jamais mélangés. Pour les très longues entrées, le snapshot est libéré afin de conserver de la marge VRAM. Le préremplissage utilise des blocs de 128 tokens et des points de synchronisation bornent le travail GPU en attente. Ctrl+C ou SIGTERM arrête le service.
+Une seule génération utilise le GPU à la fois, avec huit requêtes en attente au maximum. Le contexte par défaut est de **28 672 tokens partagés entre le prompt et la réponse**. Sans `max_tokens`, la réponse peut utiliser tout le contexte restant et s'arrête normalement au token de fin du modèle. Un préfixe exact de 2 048 tokens par défaut peut être réutilisé entre requêtes ; les préfixes différents ne sont jamais mélangés. Pour les très longues entrées, le snapshot est libéré afin de conserver de la marge VRAM. Le préremplissage utilise des blocs de 128 tokens et des points de synchronisation bornent le travail GPU en attente. Ctrl+C ou SIGTERM arrête le service.
 
 ## Discuter avec le modèle
 
@@ -44,9 +44,44 @@ cargo run -p cli -- chat "Explique-moi simplement ce qu'est un réseau de neuron
 
 Pour un document long ou multiligne : `cargo run -p cli -- chat --file prompt.txt`. La limite de sortie est automatique par défaut. Options utiles : `--max-tokens 256`, `--temperature 0` pour une réponse déterministe et `--url http://127.0.0.1:8080`. Le client reprend `GATEWAY_API_KEY` si la gateway exige une clé.
 
+## Choisir Qwen local dans OpenCode
+
+Le fichier [opencode.json](opencode.json) déclare **Qwen3 4B local**, avec l'identifiant `customai/qwen3-4b-instruct`, comme modèle par défaut du projet. Il utilise directement l'API Rust sur `http://127.0.0.1:8080/v1`. OpenCode fournit l'interface et exécute les outils ; le modèle reste chargé sur le GPU par CustomAI.
+
+Si le serveur n'est pas déjà lancé, démarrez-le dans un premier terminal :
+
+```bash
+./target/release/inference --max-model-len 28672 --prefix-cache-tokens 7680
+```
+
+Dans un second terminal :
+
+```bash
+cd /home/rustspeak/custom-ai
+opencode
+```
+
+Tapez `/models`, puis choisissez **Qwen3 4B local**. Pour un essai en ligne de commande :
+
+```bash
+opencode run --model customai/qwen3-4b-instruct "Bonjour !"
+```
+
+La configuration annonce 28 672 tokens de contexte et 2 048 tokens de sortie par appel, conformément au profil utilisé pour cette intégration. Si vous changez la fenêtre du moteur, ajustez aussi `limit.context` dans la configuration. Les définitions d'outils et l'historique occupent une partie du contexte. Les options de raisonnement sont désactivées pour ce modèle Instruct. Sans `GATEWAY_API_KEY`, aucune clé n'est nécessaire ; si la gateway est protégée, ajoutez `"apiKey": "{env:GATEWAY_API_KEY}"` dans les `settings` du fournisseur.
+
+Pour afficher le fournisseur dans les autres projets, ajoutez le bloc `providers.customai` à `~/.config/opencode/opencode.json` en conservant vos autres réglages. Cette inscription globale a été effectuée sur la machine de validation. Relancez OpenCode après une modification de sa configuration.
+
+Le moteur local n'impose ni crédits, ni quota journalier, ni plafond de nombre total d'appels. Cette absence de quota ne supprime pas les limites techniques : contexte partagé de 28 672 tokens, sortie de 2 048 tokens par appel dans cette configuration OpenCode, une génération GPU active et huit requêtes en attente au maximum. Les outils qui utilisent un service externe conservent les conditions et les quotas de ce service.
+
+La validation avec OpenCode **v2.2.6** et le GPU local couvre une réponse en streaming, puis une lecture de fichier par `read`, une création par `write` et une réponse finale reprenant le code lu. Les fichiers d'essai sont placés sous `.local/`, ignoré par Git. La prise en charge du protocole ne garantit pas la réussite de toutes les tâches de programmation avec un modèle de 4 milliards de paramètres.
+
+L'[audit natif détaillé](benchmarks/opencode-local-validation.json) vérifie également `glob`, `grep`, `edit`, `shell`, `execute` et `webfetch`, ainsi que le chargement des **16 compétences annoncées** suivi d'une confirmation par Qwen. Les résultats des outils et les fichiers créés sont contrôlés indépendamment du texte final du modèle. `websearch` atteint l'outil mais demande le choix d'une intégration de recherche, que le client non interactif ne peut pas fournir. Les questions interactives, la délégation et la génération d'images sont couvertes au niveau du transport générique des appels, sans exécution réelle dans cet audit. Charger une compétence ne vérifie pas toutes ses tâches : ses intégrations externes restent nécessaires, et ce modèle ne comprend pas les images.
+
+Le réglage initial `--max-model-len 15360` désactivait le cache au-delà de 7 680 tokens, alors que le prompt OpenCode mesuré en contenait déjà 7 768. Avec le profil ci-dessus, 7 680 tokens de préfixe commun sont réutilisés. Sur trois requêtes identiques avant et trois après, la durée moyenne après prise en charge GPU passe de **10,36 s à 0,76 s** pour les deux requêtes chaudes après modification, avec le même texte de réponse. Le premier appel froid reste à **10,51 s**. Ces durées soustraient la latence jusqu'aux en-têtes pour distinguer le service GPU de l'attente en file ; les valeurs complètes sont dans [la mesure OpenCode](benchmarks/opencode-local-performance.json). Le cache accélère la préparation répétée, pas le débit de décodage d'une longue réponse. Il conserve environ 1 080 Mio de KV pour ce préfixe ; les prompts dépassant la moitié du contexte continuent de libérer ce snapshot pour protéger la VRAM.
+
 ## Agent de recherche et navigation en Rust
 
-La CLI possède une boucle d'agent qui utilise le modèle local et pilote **Chrome ou Firefox** avec le protocole [WebDriver](https://www.w3.org/TR/webdriver2/). Le client, la lecture du DOM, le décodage des liens et l'orchestration sont écrits en Rust : aucun Python, Node.js, serveur MCP ou script JavaScript ajouté n'est nécessaire. L'API d'inférence reste une API texte ; le protocole d'actions JSON est géré par la CLI, sans prétendre prendre en charge les champs natifs `tools` et `tool_calls`.
+La CLI possède une boucle d'agent qui utilise le modèle local et pilote **Chrome ou Firefox** avec le protocole [WebDriver](https://www.w3.org/TR/webdriver2/). Le client, la lecture du DOM, le décodage des liens et l'orchestration sont écrits en Rust : aucun Python, Node.js, serveur MCP ou script JavaScript ajouté n'est nécessaire. Cette CLI conserve son protocole d'actions JSON, distinct des appels natifs `tools` et `tool_calls` utilisés par OpenCode.
 
 Prérequis : Chrome avec un [ChromeDriver compatible](https://developer.chrome.com/docs/chromedriver/get-started), ou Firefox avec [GeckoDriver](https://firefox-source-docs.mozilla.org/testing/geckodriver/Usage.html). Les pilotes sont recherchés dans `.local/bin/`, puis dans `PATH`, et peuvent être indiqués avec `--driver /chemin/du/pilote`. Sur la machine de validation : Chrome et ChromeDriver `157.0.8103.38`, Firefox `159.0` et GeckoDriver `0.37.1`. Les pilotes téléchargés dans `.local/bin/` sont ignorés par Git ; un clone du dépôt nécessite leur installation. Les navigateurs utilisent un profil temporaire séparé du profil personnel.
 
@@ -101,7 +136,7 @@ Le travail est borné par défaut à **16 décisions, 4 recherches, 8 lectures d
 
 En mode visible, la recherche attend jusqu'à 90 secondes pour permettre de traiter un CAPTCHA ou un consentement ; elle ne les contourne pas. Une session graphique est nécessaire. `--source-url` permet de poursuivre sur une source connue malgré ces limites. Les erreurs de navigation, de modèle, de protocole et les dépassements de durée ferment la session ; Ctrl+C annule le travail. Les URL sont limitées à HTTP(S) public et contrôlées avant la navigation et après la redirection. Ce contrôle ne constitue pas un filtrage de toutes les sous-requêtes réseau d'une page.
 
-Les **55 tests Rust** utilisent notamment des serveurs HTTP et des outils simulés pour vérifier la boucle de décisions, les moteurs de secours, l'exploration des liens, les passages, les refus d'actions inconnues, les citations, les limites, les erreurs et la fermeture WebDriver. La lecture réelle a réussi dans Chrome et Firefox ; voir [la validation initiale](benchmarks/web-tools-validation.json). Sur la machine de développement, le linker LLVM a planté à l'édition des liens ; la compilation et les tests passent avec le linker GNU : `RUSTFLAGS='-C link-arg=-fuse-ld=bfd' cargo build -p cli --locked` et la même variable pour `cargo test --workspace --locked`.
+Les tests Rust utilisent notamment des serveurs HTTP et des outils simulés pour vérifier la boucle de décisions, les moteurs de secours, l'exploration des liens, les passages, les refus d'actions inconnues, les citations, les limites, les erreurs et la fermeture WebDriver. La lecture réelle a réussi dans Chrome et Firefox ; voir [la validation initiale](benchmarks/web-tools-validation.json). Sur la machine de développement, le linker LLVM a planté à l'édition des liens ; la compilation et les tests passent avec le linker GNU : `RUSTFLAGS='-C link-arg=-fuse-ld=bfd' cargo build -p cli --locked` et la même variable pour `cargo test --workspace --locked`.
 
 La [validation élargie en conditions réelles](benchmarks/web-research-resilience.json) vérifie aussi une recherche autonome sans URL fournie : recherche, découverte d'un article, lecture par API et réponse citée, en trois décisions. Un second test sur une URL explicitement fournie vérifie l'exploitation du contenu : l'agent extrait la version Rust **1.98.0** et l'édition Cargo **2024** du livre officiel, et ces valeurs correspondent au texte récupéré. Une page d'installation hors Wikipédia a également été lue via WebDriver ; la lecture d'un passage d'article à l'offset 8 000 renvoie les 4 000 octets suivants. Les essais ont rencontré un GPU limité à 300 MHz sur batterie ; le délai modèle suit maintenant le budget global. La disponibilité d'un index généraliste par API reste à vérifier avec une clé Brave.
 

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "customai/qwen3-4b-instruct",
+  "providers": {
+    "customai": {
+      "name": "CustomAI local",
+      "package": "@opencode/ai/providers/openai-compatible",
+      "settings": {
+        "baseURL": "http://127.0.0.1:8080/v1"
+      },
+      "models": {
+        "qwen3-4b-instruct": {
+          "name": "Qwen3 4B local",
+          "capabilities": {
+            "tools": true,
+            "reasoning": {
+              "supported": false
+            },
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "limit": {
+            "context": 28672,
+            "output": 2048
+          }
+        }
+      }
+    }
+  }
+}
